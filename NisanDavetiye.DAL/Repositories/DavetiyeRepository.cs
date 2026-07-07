@@ -1,0 +1,85 @@
+using Microsoft.EntityFrameworkCore;
+using NisanDavetiye.DAL.Data;
+using NisanDavetiye.DAL.Entities;
+
+namespace NisanDavetiye.DAL.Repositories;
+
+public class DavetiyeRepository : IDavetiyeRepository
+{
+    private readonly NisanDavetiyeDbContext _db;
+
+    public DavetiyeRepository(NisanDavetiyeDbContext db) => _db = db;
+
+    public Task<DavetiyeAyarlari?> GetAyarlariAsync() =>
+        _db.DavetiyeAyarlari.FirstOrDefaultAsync();
+
+    public Task<DavetiyeAyarlari?> GetAyarlariByUidAsync(string uid) =>
+        _db.DavetiyeAyarlari.FirstOrDefaultAsync(a => a.DavetUid == uid);
+
+    public async Task<string?> GetDavetUidAsync()
+    {
+        var ayar = await _db.DavetiyeAyarlari.AsNoTracking().FirstOrDefaultAsync();
+        return string.IsNullOrEmpty(ayar?.DavetUid) ? null : ayar.DavetUid;
+    }
+
+    public async Task EnsureDavetUidAsync()
+    {
+        var ayar = await _db.DavetiyeAyarlari.FirstOrDefaultAsync();
+        if (ayar is null || !string.IsNullOrEmpty(ayar.DavetUid))
+            return;
+
+        ayar.DavetUid = Guid.NewGuid().ToString("N");
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateAyarlariAsync(DavetiyeAyarlari ayarlar)
+    {
+        _db.DavetiyeAyarlari.Update(ayarlar);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<IReadOnlyList<TimelineOgesi>> GetTimelineAsync() =>
+        await _db.TimelineOgeleri.OrderBy(t => t.Sira).ToListAsync();
+
+    public async Task ReplaceTimelineAsync(IEnumerable<TimelineOgesi> ogeler)
+    {
+        _db.TimelineOgeleri.RemoveRange(_db.TimelineOgeleri);
+        await _db.SaveChangesAsync();
+        await _db.TimelineOgeleri.AddRangeAsync(ogeler);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<IReadOnlyList<GaleriResmi>> GetGaleriAsync() =>
+        await _db.GaleriResimleri.OrderBy(g => g.Sira).ToListAsync();
+
+    public Task<GaleriResmi?> GetGaleriResmiByIdAsync(int id) =>
+        _db.GaleriResimleri.FirstOrDefaultAsync(g => g.Id == id);
+
+    public async Task<int> GetNextGaleriSiraAsync()
+    {
+        var max = await _db.GaleriResimleri.MaxAsync(g => (int?)g.Sira);
+        return (max ?? 0) + 1;
+    }
+
+    public async Task AddGaleriResimleriAsync(IEnumerable<GaleriResmi> resimler)
+    {
+        await _db.GaleriResimleri.AddRangeAsync(resimler);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task DeleteGaleriResmiAsync(int id)
+    {
+        var item = await _db.GaleriResimleri.FindAsync(id);
+        if (item is null) return;
+        _db.GaleriResimleri.Remove(item);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task ReplaceGaleriAsync(IEnumerable<GaleriResmi> resimler)
+    {
+        _db.GaleriResimleri.RemoveRange(_db.GaleriResimleri);
+        await _db.SaveChangesAsync();
+        await _db.GaleriResimleri.AddRangeAsync(resimler);
+        await _db.SaveChangesAsync();
+    }
+}

@@ -1,0 +1,6 @@
+@NisanDavetiye.API_HostAddress = http://localhost:5279
+
+GET {{NisanDavetiye.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

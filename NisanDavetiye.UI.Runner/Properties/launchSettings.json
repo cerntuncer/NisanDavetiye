@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "NisanDavetiye.UI.Runner": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "launchUrl": "http://localhost:5173"
+    }
+  }
+}

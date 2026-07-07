@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "API + UI",
+    "Projects": [
+      {
+        "Path": "NisanDavetiye.API\\NisanDavetiye.API.csproj",
+        "Action": "Start",
+        "DebugTarget": "http"
+      },
+      {
+        "Path": "NisanDavetiye.UI.Runner\\NisanDavetiye.UI.Runner.csproj",
+        "Action": "Start",
+        "DebugTarget": "NisanDavetiye.UI.Runner"
+      }
+    ]
+  }
+]
