@@ -134,6 +134,7 @@ using (var scope = app.Services.CreateScope())
     await davetiyeRepo.EnsureDavetUidAsync();
     await davetiyeRepo.EnsurePanelUidAsync();
     await DavetiyeDataSeeder.SeedAsync(db);
+    await DavetiyeDataSeeder.EnsureExcellenceMediaPathsAsync(db);
 
     var panelUidForLog = await davetiyeRepo.GetPanelUidAsync();
     var davetUidForLog = await davetiyeRepo.GetDavetUidAsync();
