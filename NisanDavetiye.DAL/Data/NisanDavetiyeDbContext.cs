@@ -19,6 +19,7 @@ public class NisanDavetiyeDbContext : DbContext
         modelBuilder.Entity<DavetiyeAyarlari>().HasData(new DavetiyeAyarlari
         {
             Id = 1,
+            DavetUid = "24temmuz2026",
             GelinAdi = "Ceren",
             DamatAdi = "Emre",
             BasHarpler = "C & E",

@@ -13,6 +13,7 @@ public static class DavetiyeDataSeeder
         if (!string.IsNullOrWhiteSpace(ayar.GelinAdi))
             return;
 
+        ayar.DavetUid = "24temmuz2026";
         ayar.GelinAdi = "Ceren";
         ayar.DamatAdi = "Emre";
         ayar.BasHarpler = "C & E";
