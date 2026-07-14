@@ -19,9 +19,9 @@ public class NisanDavetiyeDbContext : DbContext
         modelBuilder.Entity<DavetiyeAyarlari>().HasData(new DavetiyeAyarlari
         {
             Id = 1,
-            GelinAdi = "Ayşe",
-            DamatAdi = "Mehmet",
-            BasHarpler = "A & M",
+            GelinAdi = "Ceren",
+            DamatAdi = "Emre",
+            BasHarpler = "C & Es",
             Baslik = "Nişanımıza Davetlisiniz",
             HosgeldinMetni = "Bu mutlu günümüzde sizleri de aramızda görmekten büyük mutluluk duyarız. Sevgi ve saygılarımızla.",
             EtkinlikTarihi = new DateTime(2026, 7, 24, 19, 0, 0),
