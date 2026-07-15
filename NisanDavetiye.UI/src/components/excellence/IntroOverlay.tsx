@@ -5,15 +5,23 @@ type Phase = 'idle' | 'playing' | 'fading' | 'done'
 
 interface Props {
   videoUrl: string
-  /** Intro bitince (fade başlarken) — altındaki hero o anda oynatılmaya başlar. */
+  /** Intro bitti — hero'yu başlat. Overlay henüz ekranda kalır. */
   onComplete: () => void
   /** Fade animasyonu bittikten sonra overlay kaldırılabilir. */
   onDismissed?: () => void
+  /** Hero ilk kareyi boyadıktan sonra true — o zaman fade başlar. */
+  readyToFade?: boolean
   /** İlk kullanıcı dokunuşunda (autoplay politikası için) çağrılır. */
   onUserGesture?: () => void
 }
 
-export function IntroOverlay({ videoUrl, onComplete, onDismissed, onUserGesture }: Props) {
+export function IntroOverlay({
+  videoUrl,
+  onComplete,
+  onDismissed,
+  readyToFade = false,
+  onUserGesture,
+}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const startingRef = useRef(false)
   const completedRef = useRef(false)
@@ -30,19 +38,39 @@ export function IntroOverlay({ videoUrl, onComplete, onDismissed, onUserGesture 
     video.load()
   }, [videoUrl])
 
+  // Intro bitti → hero'yu başlat ama henüz fade etme (siyah/beyaz boşluk olmasın).
+  useEffect(() => {
+    if (phase !== 'playing') return
+
+    const video = videoRef.current
+    if (!video) return
+
+    const handleEnded = () => {
+      if (!completedRef.current) {
+        completedRef.current = true
+        onCompleteRef.current()
+      }
+    }
+
+    video.addEventListener('ended', handleEnded)
+    return () => video.removeEventListener('ended', handleEnded)
+  }, [phase])
+
+  // Hero hazır olunca fade; kısa geçiş.
+  // Intro play başarısız olduysa phase hâlâ idle olabilir — completedRef yeter.
+  useEffect(() => {
+    if (!readyToFade || phase === 'done' || phase === 'fading') return
+    if (!completedRef.current) return
+    setPhase('fading')
+  }, [readyToFade, phase])
+
   useEffect(() => {
     if (phase !== 'fading') return
-
-    // Fade başlar başlamaz hero'yu altta başlat — beyaz boşluk kalmasın.
-    if (!completedRef.current) {
-      completedRef.current = true
-      onCompleteRef.current()
-    }
 
     const t = setTimeout(() => {
       setPhase('done')
       onDismissedRef.current?.()
-    }, 1200)
+    }, 450)
     return () => clearTimeout(t)
   }, [phase])
 
@@ -65,7 +93,11 @@ export function IntroOverlay({ videoUrl, onComplete, onDismissed, onUserGesture 
       await video.play()
       setPhase('playing')
     } catch {
-      setPhase('fading')
+      if (!completedRef.current) {
+        completedRef.current = true
+        onCompleteRef.current()
+      }
+      // Fade'i hemen başlatma — hero hazır olunca readyToFade ile gelecek.
     } finally {
       startingRef.current = false
     }
@@ -85,7 +117,6 @@ export function IntroOverlay({ videoUrl, onComplete, onDismissed, onUserGesture 
         playsInline
         preload="auto"
         className="ex-intro__video"
-        onEnded={() => setPhase('fading')}
       />
       {phase === 'idle' && (
         <button

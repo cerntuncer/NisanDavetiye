@@ -8,6 +8,8 @@ interface Props {
   playVideo: boolean
   scrollLocked: boolean
   onUnlockScroll: () => void
+  /** Hero ilk kareyi boyadı / oynatmaya başladı — intro fade güvenle başlayabilir. */
+  onReady?: () => void
 }
 
 export function HeroSection({
@@ -16,16 +18,26 @@ export function HeroSection({
   playVideo,
   scrollLocked,
   onUnlockScroll,
+  onReady,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const startedRef = useRef(false)
   const endedRef = useRef(false)
+  const readyFiredRef = useRef(false)
   const onUnlockRef = useRef(onUnlockScroll)
+  const onReadyRef = useRef(onReady)
   const [showCta, setShowCta] = useState(false)
 
   onUnlockRef.current = onUnlockScroll
+  onReadyRef.current = onReady
 
   const isVideo = data.kapakGorselUrl.toLowerCase().endsWith('.mp4')
+
+  const fireReady = () => {
+    if (readyFiredRef.current) return
+    readyFiredRef.current = true
+    onReadyRef.current?.()
+  }
 
   // Intro oynarken hero videosunu önceden buffer'la; ilk kareyi boya.
   useEffect(() => {
@@ -35,12 +47,14 @@ export function HeroSection({
 
     const paintFirstFrame = () => {
       try {
+        // Seek'siz boş kare riskini azalt: çok küçük offset ile ilk kareyi zorla.
         if (video.currentTime < 0.01) video.currentTime = 0.001
       } catch {
         // ignore
       }
     }
 
+    video.preload = 'auto'
     if (video.readyState >= 2) paintFirstFrame()
     else video.addEventListener('loadeddata', paintFirstFrame, { once: true })
 
@@ -52,6 +66,7 @@ export function HeroSection({
 
     if (!isVideo) {
       setShowCta(true)
+      fireReady()
       onUnlockRef.current()
       return
     }
@@ -71,15 +86,44 @@ export function HeroSection({
     }
 
     const onEnded = () => finish()
+    const onPlaying = () => fireReady()
+    const onLoadedData = () => {
+      // Oynatma gecikirse bile en azından bir kare boyandıysa fade'e izin ver.
+      if (video.readyState >= 2) fireReady()
+    }
 
     if (!startedRef.current) {
       startedRef.current = true
-      video.currentTime = 0
-      video.play().catch(() => finish())
+      // currentTime=0'a sıfırlama seek'i boş/siyah kare üretir; zaten baştaysa dokunma.
+      if (video.currentTime > 0.05) {
+        try {
+          video.currentTime = 0
+        } catch {
+          // ignore
+        }
+      }
+      video.muted = true
+      const playPromise = video.play()
+      if (playPromise) {
+        playPromise
+          .then(() => fireReady())
+          .catch(() => {
+            fireReady()
+            finish()
+          })
+      } else {
+        fireReady()
+      }
     }
 
     video.addEventListener('ended', onEnded)
-    return () => video.removeEventListener('ended', onEnded)
+    video.addEventListener('playing', onPlaying)
+    video.addEventListener('loadeddata', onLoadedData)
+    return () => {
+      video.removeEventListener('ended', onEnded)
+      video.removeEventListener('playing', onPlaying)
+      video.removeEventListener('loadeddata', onLoadedData)
+    }
   }, [playVideo, isVideo])
 
   useEffect(() => {

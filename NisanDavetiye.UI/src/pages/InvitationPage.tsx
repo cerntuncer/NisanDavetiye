@@ -23,6 +23,7 @@ export function InvitationPage() {
   const [error, setError] = useState('')
   const [introDone, setIntroDone] = useState(false)
   const [showIntro, setShowIntro] = useState(true)
+  const [heroReady, setHeroReady] = useState(false)
   const [heroUnlocked, setHeroUnlocked] = useState(false)
   const musicRef = useRef<MusicPlayerHandle>(null)
 
@@ -51,6 +52,17 @@ export function InvitationPage() {
     setIntroDone(true)
     startMusic()
   }, [startMusic])
+
+  const handleHeroReady = useCallback(() => {
+    setHeroReady(true)
+  }, [])
+
+  // Hero çok yavaş buffer'lanırsa intro'yu sonsuza kadar tutma.
+  useEffect(() => {
+    if (!introDone || heroReady) return
+    const t = setTimeout(() => setHeroReady(true), 2000)
+    return () => clearTimeout(t)
+  }, [introDone, heroReady])
 
   const handleIntroDismissed = useCallback(() => {
     setShowIntro(false)
@@ -96,13 +108,14 @@ export function InvitationPage() {
           showButton={heroUnlocked}
         />
 
-        {/* Hero intro altında mount — video önceden yüklenir, geçişte beyaz flaş olmaz. */}
+        {/* Hero intro altında mount — video önceden yüklenir; fade ancak hero hazır olunca. */}
         <HeroSection
           data={heroData}
           showContent={false}
           playVideo={introDone}
           scrollLocked={!heroUnlocked}
           onUnlockScroll={handleHeroUnlock}
+          onReady={handleHeroReady}
         />
 
         {showIntro && (
@@ -110,6 +123,7 @@ export function InvitationPage() {
             videoUrl={data.acilisVideoUrl || '/assets/video/intro.mp4'}
             onComplete={handleIntroComplete}
             onDismissed={handleIntroDismissed}
+            readyToFade={heroReady}
             onUserGesture={startMusic}
           />
         )}
