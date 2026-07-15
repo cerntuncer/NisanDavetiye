@@ -8,12 +8,27 @@ import {
   downloadGalleryZip,
   exportRsvpExcel,
   fetchDavetiyeAdmin,
+  fetchDriveStatus,
   fetchRsvpList,
   rejectGalleryPhoto,
+  triggerDriveOffload,
   updateDavetiye,
   verifyPanelAccess,
+  type GaleriDriveStatus,
 } from '../api/client'
 import type { DavetiyeAdmin, RsvpRecord } from '../types'
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  const units = ['KB', 'MB', 'GB']
+  let value = bytes / 1024
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit++
+  }
+  return `${value.toFixed(1)} ${units[unit]}`
+}
 
 const ADMIN_KEY_STORAGE = 'nisan-admin-key'
 const PANEL_UID_PATTERN = /^[a-f0-9]{32}$/i
@@ -29,6 +44,8 @@ export function AdminPage() {
   const [rsvpList, setRsvpList] = useState<RsvpRecord[]>([])
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [driveStatus, setDriveStatus] = useState<GaleriDriveStatus | null>(null)
+  const [driveBusy, setDriveBusy] = useState(false)
 
   const loadData = async (key: string) => {
     const [d, r] = await Promise.all([
@@ -39,6 +56,9 @@ export function AdminPage() {
     setRsvpList(r)
     setLoggedIn(true)
     localStorage.setItem(ADMIN_KEY_STORAGE, key)
+    fetchDriveStatus(panelUid, key)
+      .then(setDriveStatus)
+      .catch(() => setDriveStatus(null))
   }
 
   useEffect(() => {
@@ -147,6 +167,20 @@ export function AdminPage() {
       showSuccess('Galeri zip dosyası indirildi.')
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Galeri indirilemedi.')
+    }
+  }
+
+  const handleDriveOffload = async () => {
+    setDriveBusy(true)
+    try {
+      const result = await triggerDriveOffload(panelUid, adminKey)
+      showSuccess(result.message)
+      const status = await fetchDriveStatus(panelUid, adminKey).catch(() => null)
+      if (status) setDriveStatus(status)
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Drive aktarımı başlatılamadı.')
+    } finally {
+      setDriveBusy(false)
     }
   }
 
@@ -331,6 +365,20 @@ export function AdminPage() {
           <label className="admin__full">Zarf arka plan URL<input value={davetiye.zarfArkaPlanUrl} onChange={(e) => setDavetiye({ ...davetiye, zarfArkaPlanUrl: e.target.value })} /></label>
           <label className="admin__full">Harita embed URL<textarea rows={2} value={davetiye.haritaEmbedUrl} onChange={(e) => setDavetiye({ ...davetiye, haritaEmbedUrl: e.target.value })} /></label>
           <label className="admin__full">Harita link<input value={davetiye.haritaLink} onChange={(e) => setDavetiye({ ...davetiye, haritaLink: e.target.value })} /></label>
+          <label className="admin__full admin__toggle">
+            <input
+              type="checkbox"
+              checked={davetiye.galeriYuklemeAcik}
+              onChange={(e) => setDavetiye({ ...davetiye, galeriYuklemeAcik: e.target.checked })}
+            />
+            <span>
+              Misafir fotoğraf yüklemesi açık
+              <small className="admin__hint">
+                Kapalıyken davetlilere "yükleme kapalı" mesajı gösterilir. Değişikliği
+                uygulamak için <strong>Kaydet</strong>'e basın.
+              </small>
+            </span>
+          </label>
         </div>
         <button type="submit" className="btn-primary">Kaydet</button>
       </form>
@@ -424,6 +472,43 @@ export function AdminPage() {
         <p className="admin__hint">
           Önce zip indirip bilgisayarınıza veya telefonunuza kaydedin, ardından sunucudan silerek alan açabilirsiniz.
         </p>
+
+        {driveStatus && (
+          <div className="admin__drive">
+            <div className="admin__drive-row">
+              <span>
+                Sunucu kullanımı: <strong>{formatBytes(driveStatus.localUsedBytes)}</strong> /{' '}
+                {driveStatus.thresholdMegabytes} MB eşik
+              </span>
+              <span>
+                Drive'a aktarılan: <strong>{driveStatus.offloadedCount}</strong> · Bekleyen:{' '}
+                <strong>{driveStatus.pendingCount}</strong>
+              </span>
+            </div>
+            {!driveStatus.driveEnabled ? (
+              <p className="admin__hint">
+                Google Drive entegrasyonu kapalı. Railway ortam değişkenlerinde
+                <code> DriveOffload__Enabled=true</code> ve OAuth anahtarlarını tanımlayın.
+              </p>
+            ) : (
+              <>
+                {driveStatus.overThreshold && (
+                  <p className="admin__hint">
+                    Eşik aşıldı; fotoğraflar arka planda otomatik olarak Drive'a aktarılıyor.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="btn-outline"
+                  onClick={handleDriveOffload}
+                  disabled={driveBusy || driveStatus.pendingCount === 0}
+                >
+                  {driveBusy ? 'Kuyruğa alınıyor…' : "Şimdi Drive'a Aktar"}
+                </button>
+              </>
+            )}
+          </div>
+        )}
         {uploadedPhotos.length === 0 ? (
           <p className="admin__hint">Henüz misafir fotoğrafı yok.</p>
         ) : (

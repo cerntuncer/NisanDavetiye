@@ -77,6 +77,46 @@ Recaptcha__SecretKey=YOUR_RECAPTCHA_SECRET_KEY
 > Eski `Turnstile__*` değişkenlerini kaldır. Domain Google konsolunda yoksa checkbox
 > yüklenmez veya "invalid domain" hatası verir.
 
+### Google Drive'a otomatik aktarım (300 MB eşiği)
+
+Yüklenen fotoğraflar `/data/uploads/galeri` klasöründe tutulur. Bu klasörün toplam boyutu
+eşiği (varsayılan **300 MB**) aşınca, bekleyen tüm misafir fotoğrafları bir **kuyruğa** alınır
+ve arka planda tek tek Google Drive'a yüklenir. Yükleme başarılı olunca **yerel dosya silinir**
+(disk boşalır) ve fotoğraf sitede **Drive bağlantısı** üzerinden gösterilmeye devam eder.
+Panelde "Şimdi Drive'a Aktar" butonu ile de manuel tetikleyebilirsin.
+
+Kişisel Gmail Drive'ı için OAuth 2.0 (refresh token) kullanılır:
+
+```text
+DriveOffload__Enabled=true
+DriveOffload__ThresholdMegabytes=300
+DriveOffload__CheckIntervalMinutes=5
+DriveOffload__FolderId=HEDEF_KLASOR_ID       # boş bırakılırsa Drive köküne yüklenir
+DriveOffload__ClientId=OAUTH_CLIENT_ID
+DriveOffload__ClientSecret=OAUTH_CLIENT_SECRET
+DriveOffload__RefreshToken=OAUTH_REFRESH_TOKEN
+DriveOffload__MakePublic=true                # sitede gösterim için "bağlantıya sahip herkes"
+```
+
+**Refresh token nasıl alınır (tek seferlik):**
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → yeni proje → **APIs & Services → Library**
+   içinden **Google Drive API**'yi etkinleştir.
+2. **APIs & Services → OAuth consent screen**: External seç, kendi Gmail'ini "Test users" olarak ekle.
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID → Web application**.
+   "Authorized redirect URIs" alanına `https://developers.google.com/oauthplayground` ekle.
+   Oluşan **Client ID** ve **Client Secret**'i not al.
+4. [OAuth 2.0 Playground](https://developers.google.com/oauthplayground/) → sağ üst dişli →
+   "Use your own OAuth credentials" işaretle, Client ID/Secret'i gir.
+5. Sol listede **Drive API v3** altında `https://www.googleapis.com/auth/drive.file` scope'unu seç →
+   "Authorize APIs" → kendi hesabınla giriş yap ve izin ver.
+6. "Exchange authorization code for tokens" → dönen **Refresh token**'ı kopyala.
+7. (İsteğe bağlı) Drive'da bir klasör oluştur; URL'deki `folders/` sonrası kısım **FolderId**'dir.
+
+> `drive.file` scope'u yalnızca uygulamanın oluşturduğu dosyalara erişir; mevcut Drive
+> içeriğine dokunmaz. `MakePublic=true` yüklenen fotoğrafı "bağlantıya sahip herkes görebilir"
+> yapar (sitede `<img>` ile gösterebilmek için gerekir).
+
 ### İsteğe bağlı (varsayılanları var)
 
 ```text

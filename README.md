@@ -55,6 +55,7 @@ için [`RAILWAY_DEPLOYMENT.md`](./RAILWAY_DEPLOYMENT.md) dosyasına bakın.
 - Form isteklerinde IP başına dakikada 20 istek; panel API'de dakikada 60 istek
 - Misafir fotoğrafları magic byte doğrulaması, günlük kota ve yönetici onayından sonra yayınlanır
 - Yüklenen fotoğraflar imzalı URL ile sunulur (`/api/media/galeri/...`); doğrudan `/uploads` erişimi kapalı
+- Yerel galeri klasörü 300 MB eşiğini aşınca fotoğraflar kuyrukla Google Drive'a aktarılır, yerel dosya silinir ve sitede Drive bağlantısından gösterilir (kurulum: [`RAILWAY_DEPLOYMENT.md`](./RAILWAY_DEPLOYMENT.md))
 - Seeder yalnızca ilk kurulumda çalışır; restart'ta ayarları ezmez
 
 ## Medya dosyalarını değiştirme

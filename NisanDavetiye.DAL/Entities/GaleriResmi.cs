@@ -8,4 +8,7 @@ public class GaleriResmi
     public int Sira { get; set; }
     public bool Onaylandi { get; set; }
     public DateTime YuklemeTarihi { get; set; } = DateTime.UtcNow;
+
+    /// <summary>Dolu ise fotoğraf Google Drive'a aktarılmış ve yerel dosya silinmiştir.</summary>
+    public string DriveFileId { get; set; } = string.Empty;
 }

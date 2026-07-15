@@ -13,12 +13,8 @@ public class GaleriService : IGaleriService
     private const int MaxFilesPerRequest = 10;
     private const long MaxFileBytes = 15 * 1024 * 1024;
 
-    /// <summary>Türkiye saati (UTC+3) 24.07.2026 12:30 — bu andan önce misafir yüklemesi kapalı.</summary>
-    private static readonly DateTimeOffset UploadOpensAt =
-        new(2026, 7, 24, 12, 30, 0, TimeSpan.FromHours(3));
-
-    private const string UploadNotOpenMessage =
-        "Fotoğraf yükleme, Türkiye saati ile 24.07.2026 saat 12:30 sonrasında açılabilecektir.";
+    private const string UploadClosedMessage =
+        "Fotoğraf yükleme şu anda kapalı. Lütfen daha sonra tekrar deneyin.";
 
     private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -32,23 +28,27 @@ public class GaleriService : IGaleriService
     private readonly IDavetiyeRepository _repo;
     private readonly GaleriStorageOptions _storage;
     private readonly IMediaUrlSigner _mediaSigner;
+    private readonly IDriveStorageService _drive;
 
     public GaleriService(
         IDavetiyeRepository repo,
         IOptions<GaleriStorageOptions> storageOptions,
-        IMediaUrlSigner mediaSigner)
+        IMediaUrlSigner mediaSigner,
+        IDriveStorageService drive)
     {
         _repo = repo;
         _storage = storageOptions.Value;
         _mediaSigner = mediaSigner;
+        _drive = drive;
     }
 
     public async Task<GaleriUploadResultDto> UploadAsync(
         IReadOnlyList<GaleriUploadFile> files,
         CancellationToken cancellationToken = default)
     {
-        if (DateTimeOffset.UtcNow < UploadOpensAt)
-            throw new ArgumentException(UploadNotOpenMessage);
+        var ayar = await _repo.GetAyarlariAsync();
+        if (ayar is null || !ayar.GaleriYuklemeAcik)
+            throw new ArgumentException(UploadClosedMessage);
 
         if (files.Count == 0)
             throw new ArgumentException("En az bir fotoğraf seçin.");
@@ -157,6 +157,7 @@ public class GaleriService : IGaleriService
             throw new InvalidOperationException("Bu kayıt misafir yüklemesi değil.");
 
         DeleteDiskFile(item.Url);
+        await DeleteDriveFileIfAnyAsync(item);
         await _repo.DeleteGaleriResmiAsync(id);
         return new GaleriSilResultDto(1);
     }
@@ -203,6 +204,7 @@ public class GaleriService : IGaleriService
             throw new InvalidOperationException("Bu kayıt misafir yüklemesi değil.");
 
         DeleteDiskFile(item.Url);
+        await DeleteDriveFileIfAnyAsync(item);
         await _repo.DeleteGaleriResmiAsync(id);
         return new GaleriSilResultDto(1);
     }
@@ -214,7 +216,9 @@ public class GaleriService : IGaleriService
 
         foreach (var item in items)
         {
-            if (DeleteDiskFile(item.Url))
+            var removedLocal = DeleteDiskFile(item.Url);
+            await DeleteDriveFileIfAnyAsync(item);
+            if (removedLocal || !string.IsNullOrEmpty(item.DriveFileId))
                 deleted++;
 
             await _repo.DeleteGaleriResmiAsync(item.Id);
@@ -223,12 +227,32 @@ public class GaleriService : IGaleriService
         return new GaleriSilResultDto(deleted);
     }
 
+    private async Task DeleteDriveFileIfAnyAsync(GaleriResmi item)
+    {
+        if (string.IsNullOrEmpty(item.DriveFileId))
+            return;
+
+        try
+        {
+            await _drive.DeleteAsync(item.DriveFileId);
+        }
+        catch
+        {
+            // Drive'dan silinemezse DB kaydını yine de kaldırırız; kalıntı dosya manuel temizlenebilir.
+        }
+    }
+
     private GaleriDto MapDto(GaleriResmi item, bool forAdmin)
     {
         var misafir = _mediaSigner.IsGuestUploadUrl(item.Url);
-        var url = misafir
-            ? _mediaSigner.SignGuestFile(_mediaSigner.TryGetFileName(item.Url)!, forAdmin)
-            : item.Url;
+
+        string url;
+        if (!misafir)
+            url = item.Url;
+        else if (!string.IsNullOrEmpty(item.DriveFileId))
+            url = _drive.BuildViewUrl(item.DriveFileId);
+        else
+            url = _mediaSigner.SignGuestFile(_mediaSigner.TryGetFileName(item.Url)!, forAdmin);
 
         return new GaleriDto(item.Id, url, item.AltMetin, item.Sira, item.Onaylandi, misafir);
     }

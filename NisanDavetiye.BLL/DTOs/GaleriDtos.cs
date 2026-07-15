@@ -12,3 +12,16 @@ public record GaleriUploadFile(
     string ContentType,
     Stream Content,
     long Length);
+
+public record GaleriDriveStatusDto(
+    bool DriveEnabled,
+    long LocalUsedBytes,
+    long ThresholdBytes,
+    int ThresholdMegabytes,
+    int PendingCount,
+    int OffloadedCount,
+    bool OverThreshold);
+
+public record GaleriDriveOffloadResultDto(
+    int QueuedCount,
+    string Message);

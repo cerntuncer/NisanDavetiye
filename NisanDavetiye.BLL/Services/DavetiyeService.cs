@@ -61,6 +61,7 @@ public class DavetiyeService : IDavetiyeService
         ayar.MuzikUrl = dto.MuzikUrl.Trim();
         ayar.ZarfArkaPlanUrl = dto.ZarfArkaPlanUrl.Trim();
         ayar.GaleriDriveKlasorUrl = dto.GaleriDriveKlasorUrl.Trim();
+        ayar.GaleriYuklemeAcik = dto.GaleriYuklemeAcik;
 
         await _repo.UpdateAyarlariAsync(ayar);
 
@@ -91,6 +92,7 @@ public class DavetiyeService : IDavetiyeService
             ayar.MuzikUrl,
             ayar.ZarfArkaPlanUrl,
             ayar.GaleriDriveKlasorUrl,
+            ayar.GaleriYuklemeAcik,
             timeline.Select(t => new TimelineDto(t.Id, t.Baslik, t.Aciklama, t.Saat, t.Sira)).ToList(),
             galeri
                 .Where(g => !_mediaSigner.IsGuestUploadUrl(g.Url) || g.Onaylandi)
@@ -120,6 +122,7 @@ public class DavetiyeService : IDavetiyeService
             ayar.MuzikUrl,
             ayar.ZarfArkaPlanUrl,
             ayar.GaleriDriveKlasorUrl,
+            ayar.GaleriYuklemeAcik,
             timeline.Select(t => new TimelineDto(t.Id, t.Baslik, t.Aciklama, t.Saat, t.Sira)).ToList(),
             galeri.Select(g => MapGaleri(g, forAdmin: true)).ToList());
 

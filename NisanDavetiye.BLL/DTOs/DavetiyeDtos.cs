@@ -21,6 +21,7 @@ public record DavetiyeDto(
     string MuzikUrl,
     string ZarfArkaPlanUrl,
     string GaleriDriveKlasorUrl,
+    bool GaleriYuklemeAcik,
     IReadOnlyList<TimelineDto> Timeline,
     IReadOnlyList<GaleriDto> Galeri);
 
@@ -43,6 +44,7 @@ public record DavetiyeAdminDto(
     string MuzikUrl,
     string ZarfArkaPlanUrl,
     string GaleriDriveKlasorUrl,
+    bool GaleriYuklemeAcik,
     IReadOnlyList<TimelineDto> Timeline,
     IReadOnlyList<GaleriDto> Galeri);
 
@@ -63,6 +65,7 @@ public record DavetiyeGuncelleDto(
     string MuzikUrl,
     string ZarfArkaPlanUrl,
     string GaleriDriveKlasorUrl,
+    bool GaleriYuklemeAcik,
     IReadOnlyList<TimelineDto> Timeline,
     IReadOnlyList<GaleriDto> Galeri);
 

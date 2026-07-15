@@ -6,16 +6,16 @@ import { RecaptchaWidget } from './RecaptchaWidget'
 
 const MAX_FILES = 10
 
-/** Türkiye saati (UTC+3) 24.07.2026 12:30 */
-const UPLOAD_OPENS_AT = Date.parse('2026-07-24T12:30:00+03:00')
 const UPLOAD_LOCKED_MESSAGE =
-  'Fotoğraf yükleme, Türkiye saati ile 24.07.2026 saat 12:30 sonrasında açılabilecektir.'
+  'Fotoğraf yükleme şu anda kapalı. Tören sırasında/sonrasında açılacaktır.'
 
 type GalleryUploadProps = {
   onUploaded?: () => void
+  /** Panelden yönetilen yükleme anahtarı; kapalıysa kilitli görünüm gösterilir. */
+  uploadOpen?: boolean
 }
 
-export function GalleryUpload({ onUploaded }: GalleryUploadProps) {
+export function GalleryUpload({ onUploaded, uploadOpen = true }: GalleryUploadProps) {
   const inviteKey = useInviteKey()
   const inputRef = useRef<HTMLInputElement>(null)
   const [files, setFiles] = useState<File[]>([])
@@ -24,7 +24,6 @@ export function GalleryUpload({ onUploaded }: GalleryUploadProps) {
   const [captchaToken, setCaptchaToken] = useState('')
   const [captchaResetKey, setCaptchaResetKey] = useState(0)
 
-  const uploadOpen = Date.now() >= UPLOAD_OPENS_AT
   const busy = status === 'preparing' || status === 'loading'
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {

@@ -8,7 +8,11 @@ function hideOnError(e: React.SyntheticEvent<HTMLImageElement>) {
   e.currentTarget.style.display = 'none'
 }
 
-export function GallerySection() {
+type GallerySectionProps = {
+  uploadOpen?: boolean
+}
+
+export function GallerySection({ uploadOpen = false }: GallerySectionProps) {
   return (
     <section className="ex-section ex-gallery">
       <div className="ex-gallery__inner">
@@ -35,7 +39,7 @@ export function GallerySection() {
         </FadeIn>
 
         <FadeIn delay={0.1}>
-          <GalleryUpload />
+          <GalleryUpload uploadOpen={uploadOpen} />
         </FadeIn>
       </div>
     </section>

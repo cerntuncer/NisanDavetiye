@@ -11,8 +11,30 @@ namespace NisanDavetiye.API.Controllers;
 public class PanelGaleriController : ControllerBase
 {
     private readonly IGaleriService _service;
+    private readonly IDriveOffloadService _drive;
 
-    public PanelGaleriController(IGaleriService service) => _service = service;
+    public PanelGaleriController(IGaleriService service, IDriveOffloadService drive)
+    {
+        _service = service;
+        _drive = drive;
+    }
+
+    [HttpGet("drive/status")]
+    public async Task<ActionResult<GaleriDriveStatusDto>> DriveStatus(CancellationToken cancellationToken)
+        => Ok(await _drive.GetStatusAsync(cancellationToken));
+
+    [HttpPost("drive/offload")]
+    public async Task<ActionResult<GaleriDriveOffloadResultDto>> DriveOffload(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return Ok(await _drive.EnqueuePendingAsync(cancellationToken));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 
     [HttpGet("export")]
     public async Task<IActionResult> ExportZip(CancellationToken cancellationToken)

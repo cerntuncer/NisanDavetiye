@@ -94,6 +94,45 @@ export async function downloadGalleryZip(panelUid: string, adminKey: string): Pr
   return res.blob()
 }
 
+export interface GaleriDriveStatus {
+  driveEnabled: boolean
+  localUsedBytes: number
+  thresholdBytes: number
+  thresholdMegabytes: number
+  pendingCount: number
+  offloadedCount: number
+  overThreshold: boolean
+}
+
+export async function fetchDriveStatus(
+  panelUid: string,
+  adminKey: string,
+): Promise<GaleriDriveStatus> {
+  const res = await fetch(`${API}/panel/galeri/drive/status`, {
+    headers: panelHeaders(panelUid, adminKey),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.message ?? 'Drive durumu alınamadı')
+  }
+  return res.json()
+}
+
+export async function triggerDriveOffload(
+  panelUid: string,
+  adminKey: string,
+): Promise<{ queuedCount: number; message: string }> {
+  const res = await fetch(`${API}/panel/galeri/drive/offload`, {
+    method: 'POST',
+    headers: panelHeaders(panelUid, adminKey),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.message ?? 'Drive aktarımı başlatılamadı')
+  }
+  return res.json()
+}
+
 export async function approveGalleryPhoto(
   id: number,
   panelUid: string,
@@ -210,6 +249,7 @@ export async function updateDavetiye(
       muzikUrl: data.muzikUrl,
       zarfArkaPlanUrl: data.zarfArkaPlanUrl,
       galeriDriveKlasorUrl: data.galeriDriveKlasorUrl,
+      galeriYuklemeAcik: data.galeriYuklemeAcik,
       timeline: data.timeline,
       galeri: data.galeri,
     }),

@@ -23,4 +23,6 @@ public class DavetiyeAyarlari
     public string MuzikUrl { get; set; } = string.Empty;
     public string ZarfArkaPlanUrl { get; set; } = string.Empty;
     public string GaleriDriveKlasorUrl { get; set; } = string.Empty;
+    /// <summary>Misafir fotoğraf yüklemesi açık mı? Panelden yönetilir.</summary>
+    public bool GaleriYuklemeAcik { get; set; }
 }

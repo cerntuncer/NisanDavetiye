@@ -17,6 +17,8 @@ public interface IDavetiyeRepository
     Task<GaleriResmi?> GetGaleriResmiByIdAsync(int id);
     Task<int> CountGuestUploadsSinceAsync(DateTime sinceUtc, string uploadUrlPrefix);
     Task SetGaleriOnayAsync(int id, bool onaylandi);
+    Task SetGaleriDriveFileIdAsync(int id, string driveFileId);
+    Task<IReadOnlyList<GaleriResmi>> GetGuestUploadsPendingDriveAsync(string uploadUrlPrefix);
     Task<int> GetNextGaleriSiraAsync();
     Task AddGaleriResimleriAsync(IEnumerable<GaleriResmi> resimler);
     Task DeleteGaleriResmiAsync(int id);

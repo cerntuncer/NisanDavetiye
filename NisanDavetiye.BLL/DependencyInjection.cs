@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.Configure<GaleriStorageOptions>(configuration.GetSection(GaleriStorageOptions.SectionName));
         services.Configure<RecaptchaOptions>(configuration.GetSection(RecaptchaOptions.SectionName));
         services.Configure<MediaSigningOptions>(configuration.GetSection(MediaSigningOptions.SectionName));
+        services.Configure<DriveOffloadOptions>(configuration.GetSection(DriveOffloadOptions.SectionName));
 
         services.AddHttpClient<ICaptchaService, RecaptchaCaptchaService>();
 
@@ -21,6 +22,12 @@ public static class DependencyInjection
         services.AddScoped<IRsvpService, RsvpService>();
         services.AddScoped<IGaleriService, GaleriService>();
         services.AddSingleton<IMediaUrlSigner, MediaUrlSigner>();
+
+        // Google Drive aktarımı (300MB eşiği + kuyruk)
+        services.AddSingleton<IDriveStorageService, GoogleDriveStorageService>();
+        services.AddSingleton<IDriveOffloadQueue, DriveOffloadQueue>();
+        services.AddScoped<IDriveOffloadService, DriveOffloadService>();
+        services.AddHostedService<DriveOffloadWorker>();
         return services;
     }
 }

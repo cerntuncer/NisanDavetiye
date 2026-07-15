@@ -131,6 +131,8 @@ using (var scope = app.Services.CreateScope())
     await EnsureDavetUidSchemaAsync(db);
     await EnsurePanelUidSchemaAsync(db);
     await EnsureGaleriOnaySchemaAsync(db);
+    await EnsureGaleriDriveSchemaAsync(db);
+    await EnsureGaleriYuklemeSchemaAsync(db);
     await davetiyeRepo.EnsureDavetUidAsync();
     await davetiyeRepo.EnsurePanelUidAsync();
     await DavetiyeDataSeeder.SeedAsync(db);
@@ -249,6 +251,54 @@ static async Task EnsurePanelUidSchemaAsync(NisanDavetiyeDbContext db)
     alter.CommandText = """
         ALTER TABLE DavetiyeAyarlari
         ADD COLUMN PanelUid TEXT NOT NULL DEFAULT ''
+        """;
+    await alter.ExecuteNonQueryAsync();
+}
+
+static async Task EnsureGaleriDriveSchemaAsync(NisanDavetiyeDbContext db)
+{
+    await using var connection = db.Database.GetDbConnection();
+    if (connection.State != System.Data.ConnectionState.Open)
+        await connection.OpenAsync();
+
+    await using var check = connection.CreateCommand();
+    check.CommandText = """
+        SELECT COUNT(*)
+        FROM pragma_table_info('GaleriResimleri')
+        WHERE name = 'DriveFileId'
+        """;
+    var exists = Convert.ToInt64(await check.ExecuteScalarAsync() ?? 0L) > 0;
+    if (exists)
+        return;
+
+    await using var alter = connection.CreateCommand();
+    alter.CommandText = """
+        ALTER TABLE GaleriResimleri
+        ADD COLUMN DriveFileId TEXT NOT NULL DEFAULT ''
+        """;
+    await alter.ExecuteNonQueryAsync();
+}
+
+static async Task EnsureGaleriYuklemeSchemaAsync(NisanDavetiyeDbContext db)
+{
+    await using var connection = db.Database.GetDbConnection();
+    if (connection.State != System.Data.ConnectionState.Open)
+        await connection.OpenAsync();
+
+    await using var check = connection.CreateCommand();
+    check.CommandText = """
+        SELECT COUNT(*)
+        FROM pragma_table_info('DavetiyeAyarlari')
+        WHERE name = 'GaleriYuklemeAcik'
+        """;
+    var exists = Convert.ToInt64(await check.ExecuteScalarAsync() ?? 0L) > 0;
+    if (exists)
+        return;
+
+    await using var alter = connection.CreateCommand();
+    alter.CommandText = """
+        ALTER TABLE DavetiyeAyarlari
+        ADD COLUMN GaleriYuklemeAcik INTEGER NOT NULL DEFAULT 0
         """;
     await alter.ExecuteNonQueryAsync();
 }

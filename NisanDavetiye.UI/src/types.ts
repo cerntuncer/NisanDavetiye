@@ -32,6 +32,7 @@ export interface Davetiye {
   muzikUrl: string
   zarfArkaPlanUrl: string
   galeriDriveKlasorUrl: string
+  galeriYuklemeAcik: boolean
   timeline: TimelineItem[]
   galeri: GaleriItem[]
 }

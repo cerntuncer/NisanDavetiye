@@ -125,7 +125,7 @@ export function InvitationPage() {
             <SectionDivider />
             <TimelineSection items={data.timeline} />
             <SectionDivider />
-            <GallerySection />
+            <GallerySection uploadOpen={data.galeriYuklemeAcik} />
             <SectionDivider />
             <RsvpSection />
             <ExcellenceFooter names={names} dateStr={dateStr} />
