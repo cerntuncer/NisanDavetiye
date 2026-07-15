@@ -84,7 +84,6 @@ export function RsvpSection() {
         <FadeIn>
           <ExcellenceSectionHeader
             title="Katılım Bildirimi"
-            subtitle="Umarız gelebilirsiniz"
           />
         </FadeIn>
 

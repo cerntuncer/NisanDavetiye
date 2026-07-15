@@ -329,7 +329,8 @@ img {
   font-family: var(--font-body);
   font-size: clamp(2.5rem, 10vw, 4.5rem);
   font-weight: 400;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: hsl(var(--foreground));
   line-height: 1.1;
   margin-bottom: 0.5rem;
@@ -338,6 +339,8 @@ img {
 .ex-section-title--script {
   font-family: var(--font-script);
   font-size: clamp(3rem, 12vw, 5.5rem);
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .ex-section-eyebrow {
